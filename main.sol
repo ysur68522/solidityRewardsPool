@@ -214,3 +214,27 @@ contract MegaMultiRewardStaking {
 
             if (account != address(0)) {
                 uint256 e = earned(account, t);
+                rewards[account][t] = e;
+                userRewardPerTokenPaid[account][t] = newRPT;
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Staking actions
+    // -------------------------------------------------------------------------
+
+    function stake(uint256 amount) external whenNotPaused nonReentrant {
+        if (amount == 0) revert ZeroAmount();
+        _updateReward(msg.sender);
+
+        totalStaked += amount;
+        stakedBalance[msg.sender] += amount;
+
+        _safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
+        emit Staked(msg.sender, amount);
+    }
+
+    /**
+     * @notice Stake using EIP-2612 permit (if staking token supports it).
+     *         If token doesn't support permit, this call will revert.
