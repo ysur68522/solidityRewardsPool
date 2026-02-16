@@ -262,3 +262,27 @@ contract MegaMultiRewardStaking {
 
     function withdraw(uint256 amount) public whenNotPaused nonReentrant {
         if (amount == 0) revert ZeroAmount();
+        if (stakedBalance[msg.sender] < amount) revert("insufficient staked");
+
+        _updateReward(msg.sender);
+
+        stakedBalance[msg.sender] -= amount;
+        totalStaked -= amount;
+
+        _safeTransfer(address(stakingToken), msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
+    }
+
+    function exit() external {
+        withdraw(stakedBalance[msg.sender]);
+        claimAll();
+    }
+
+    // -------------------------------------------------------------------------
+    // Claim rewards
+    // -------------------------------------------------------------------------
+
+    function claim(address token) public whenNotPaused nonReentrant {
+        if (!rewardData[token].exists) revert RewardTokenNotFound();
+        _updateReward(msg.sender);
+
