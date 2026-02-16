@@ -238,3 +238,27 @@ contract MegaMultiRewardStaking {
     /**
      * @notice Stake using EIP-2612 permit (if staking token supports it).
      *         If token doesn't support permit, this call will revert.
+     */
+    function stakeWithPermit(
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external whenNotPaused nonReentrant {
+        if (amount == 0) revert ZeroAmount();
+
+        // Permit approval to this contract
+        IERC20Permit(address(stakingToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+
+        _updateReward(msg.sender);
+
+        totalStaked += amount;
+        stakedBalance[msg.sender] += amount;
+
+        _safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
+        emit Staked(msg.sender, amount);
+    }
+
+    function withdraw(uint256 amount) public whenNotPaused nonReentrant {
+        if (amount == 0) revert ZeroAmount();
