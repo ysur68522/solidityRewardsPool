@@ -310,3 +310,27 @@ contract MegaMultiRewardStaking {
             }
         }
         if (!any) revert NothingToClaim();
+    }
+
+    // -------------------------------------------------------------------------
+    // Owner: manage reward tokens and notify rewards
+    // -------------------------------------------------------------------------
+
+    /**
+     * @notice Add a new reward token.
+     * @param token reward token address
+     * @param duration seconds over which notified rewards are streamed
+     */
+    function addRewardToken(address token, uint64 duration) external onlyOwner {
+        if (token == address(0)) revert ZeroAddress();
+        if (rewardTokens.length >= MAX_REWARD_TOKENS) revert TooManyRewardTokens();
+        if (rewardData[token].exists) revert TokenAlreadyAdded();
+        if (duration == 0) revert InvalidDuration();
+
+        rewardTokens.push(token);
+        rewardData[token] = RewardData({
+            exists: true,
+            duration: duration,
+            periodFinish: 0,
+            lastUpdateTime: 0,
+            rewardRate: 0,
