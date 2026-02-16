@@ -46,3 +46,27 @@ contract MegaMultiRewardStaking {
     // Errors
     // -------------------------------------------------------------------------
 
+    error NotOwner();
+    error Paused();
+    error Reentrancy();
+    error ZeroAmount();
+    error ZeroAddress();
+    error TokenAlreadyAdded();
+    error RewardTokenNotFound();
+    error InvalidDuration();
+    error TooEarly();
+    error TransferFailed();
+    error BadArrayLengths();
+    error TooManyRewardTokens();
+    error NothingToClaim();
+
+    // -------------------------------------------------------------------------
+    // Events
+    // -------------------------------------------------------------------------
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event PausedStateChanged(bool paused);
+
+    event Staked(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+    event RewardClaimed(address indexed user, address indexed rewardToken, uint256 amount);
