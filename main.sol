@@ -358,3 +358,27 @@ contract MegaMultiRewardStaking {
      *         Owner must have transferred reward tokens to this contract beforehand
      *         OR approve+transferFrom via notifyWithTransferFrom.
      */
+    function notifyRewardAmount(address token, uint256 amount) public onlyOwner {
+        if (amount == 0) revert ZeroAmount();
+        RewardData storage rd = rewardData[token];
+        if (!rd.exists) revert RewardTokenNotFound();
+
+        _updateReward(address(0));
+
+        uint256 currentTime = block.timestamp;
+        uint256 duration = rd.duration;
+
+        // If period is still active, leftover rewards are rolled over.
+        uint256 newRewardRate;
+        if (currentTime >= rd.periodFinish) {
+            newRewardRate = amount / duration;
+        } else {
+            uint256 remaining = rd.periodFinish - currentTime;
+            uint256 leftover = remaining * uint256(rd.rewardRate);
+            newRewardRate = (amount + leftover) / duration;
+        }
+
+        require(newRewardRate > 0, "rewardRate=0");
+
+        // Ensure contract holds enough tokens to cover distribution.
+        // This check assumes token has no fee-on-transfer mechanics.
