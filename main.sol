@@ -406,3 +406,27 @@ contract MegaMultiRewardStaking {
     // -------------------------------------------------------------------------
     // Owner: admin
     // -------------------------------------------------------------------------
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner == address(0)) revert ZeroAddress();
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function setPaused(bool paused_) external onlyOwner {
+        isPaused = paused_;
+        emit PausedStateChanged(paused_);
+    }
+
+    /**
+     * @notice Rescue tokens accidentally sent to the contract.
+     *         Cannot rescue the staking token if users are staked (to avoid rugging).
+     *         Reward tokens can be rescued only for amounts not needed for active periods.
+     */
+    function rescueToken(address token, address to, uint256 amount) external onlyOwner nonReentrant {
+        if (to == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroAmount();
+
+        // Protect stakers: don't allow rescuing staking token while funds are staked.
+        if (token == address(stakingToken)) {
+            require(totalStaked == 0, "cannot rescue staking token while staked");
