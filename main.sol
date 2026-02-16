@@ -190,3 +190,27 @@ contract MegaMultiRewardStaking {
     function claimableAll(address account) external view returns (address[] memory tokens, uint256[] memory amounts) {
         uint256 n = rewardTokens.length;
         tokens = new address[](n);
+        amounts = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            address t = rewardTokens[i];
+            tokens[i] = t;
+            amounts[i] = earned(account, t);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal accounting updates
+    // -------------------------------------------------------------------------
+
+    function _updateReward(address account) internal {
+        uint256 n = rewardTokens.length;
+        for (uint256 i = 0; i < n; i++) {
+            address t = rewardTokens[i];
+            RewardData storage rd = rewardData[t];
+
+            uint256 newRPT = rewardPerToken(t);
+            rd.rewardPerTokenStored = newRPT;
+            rd.lastUpdateTime = uint64(lastTimeRewardApplicable(t));
+
+            if (account != address(0)) {
+                uint256 e = earned(account, t);
