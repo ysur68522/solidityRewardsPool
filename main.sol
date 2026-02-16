@@ -286,3 +286,27 @@ contract MegaMultiRewardStaking {
         if (!rewardData[token].exists) revert RewardTokenNotFound();
         _updateReward(msg.sender);
 
+        uint256 amount = rewards[msg.sender][token];
+        if (amount == 0) revert NothingToClaim();
+
+        rewards[msg.sender][token] = 0;
+        _safeTransfer(IERC20(token), msg.sender, amount);
+        emit RewardClaimed(msg.sender, token, amount);
+    }
+
+    function claimAll() public whenNotPaused nonReentrant {
+        _updateReward(msg.sender);
+
+        uint256 n = rewardTokens.length;
+        bool any;
+        for (uint256 i = 0; i < n; i++) {
+            address t = rewardTokens[i];
+            uint256 amount = rewards[msg.sender][t];
+            if (amount > 0) {
+                any = true;
+                rewards[msg.sender][t] = 0;
+                _safeTransfer(IERC20(t), msg.sender, amount);
+                emit RewardClaimed(msg.sender, t, amount);
+            }
+        }
+        if (!any) revert NothingToClaim();
