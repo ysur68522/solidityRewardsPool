@@ -334,3 +334,27 @@ contract MegaMultiRewardStaking {
             periodFinish: 0,
             lastUpdateTime: 0,
             rewardRate: 0,
+            rewardPerTokenStored: 0
+        });
+
+        emit RewardTokenAdded(token, duration);
+    }
+
+    /**
+     * @notice Set duration for a reward token (only when no active period).
+     */
+    function setRewardDuration(address token, uint64 duration) external onlyOwner {
+        RewardData storage rd = rewardData[token];
+        if (!rd.exists) revert RewardTokenNotFound();
+        if (duration == 0) revert InvalidDuration();
+        if (block.timestamp < rd.periodFinish) revert TooEarly();
+
+        rd.duration = duration;
+        // no event for brevity (could add)
+    }
+
+    /**
+     * @notice Notify a new reward amount to distribute for a reward token.
+     *         Owner must have transferred reward tokens to this contract beforehand
+     *         OR approve+transferFrom via notifyWithTransferFrom.
+     */
