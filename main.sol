@@ -142,3 +142,27 @@ contract MegaMultiRewardStaking {
     // Constructor
     // -------------------------------------------------------------------------
 
+    constructor(address _stakingToken) {
+        if (_stakingToken == address(0)) revert ZeroAddress();
+        owner = msg.sender;
+        stakingToken = IERC20(_stakingToken);
+        emit OwnershipTransferred(address(0), msg.sender);
+    }
+
+    // -------------------------------------------------------------------------
+    // View helpers
+    // -------------------------------------------------------------------------
+
+    function rewardTokenCount() external view returns (uint256) {
+        return rewardTokens.length;
+    }
+
+    function rewardTokenAt(uint256 index) external view returns (address) {
+        return rewardTokens[index];
+    }
+
+    function lastTimeRewardApplicable(address token) public view returns (uint256) {
+        uint256 finish = rewardData[token].periodFinish;
+        return block.timestamp < finish ? block.timestamp : finish;
+    }
+
