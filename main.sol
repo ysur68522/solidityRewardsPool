@@ -166,3 +166,27 @@ contract MegaMultiRewardStaking {
         return block.timestamp < finish ? block.timestamp : finish;
     }
 
+    function rewardPerToken(address token) public view returns (uint256) {
+        RewardData memory rd = rewardData[token];
+        if (!rd.exists) return 0;
+
+        if (totalStaked == 0) return rd.rewardPerTokenStored;
+
+        uint256 timeDelta = lastTimeRewardApplicable(token) - rd.lastUpdateTime;
+        uint256 accrued = (timeDelta * uint256(rd.rewardRate) * PRECISION) / totalStaked;
+        return rd.rewardPerTokenStored + accrued;
+    }
+
+    function earned(address account, address token) public view returns (uint256) {
+        RewardData memory rd = rewardData[token];
+        if (!rd.exists) return 0;
+
+        uint256 rpt = rewardPerToken(token);
+        uint256 paid = userRewardPerTokenPaid[account][token];
+        uint256 pending = (stakedBalance[account] * (rpt - paid)) / PRECISION;
+        return rewards[account][token] + pending;
+    }
+
+    function claimableAll(address account) external view returns (address[] memory tokens, uint256[] memory amounts) {
+        uint256 n = rewardTokens.length;
+        tokens = new address[](n);
