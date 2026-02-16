@@ -454,3 +454,14 @@ contract MegaMultiRewardStaking {
         (bool ok, bytes memory data) =
             address(token).call(abi.encodeWithSelector(token.transfer.selector, to, amount));
         if (!ok) revert TransferFailed();
+        if (data.length > 0 && !abi.decode(data, (bool))) revert TransferFailed();
+    }
+
+    function _safeTransferFrom(address token, address from, address to, uint256 amount) internal {
+        (bool ok, bytes memory data) =
+            token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, amount));
+        if (!ok) revert TransferFailed();
+        if (data.length > 0 && !abi.decode(data, (bool))) revert TransferFailed();
+    }
+}
+
