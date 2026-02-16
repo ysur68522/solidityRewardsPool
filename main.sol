@@ -118,3 +118,27 @@ contract MegaMultiRewardStaking {
     // Typical rewards distribution math (similar to Synthetix/StakingRewards):
     // rewardPerTokenStored increases over time: (timeDelta * rewardRate * 1e18 / totalStaked)
     // userRewardPerTokenPaid tracks the user's checkpoint for each reward token
+    // rewards[user][token] stores accrued rewards
+
+    struct RewardData {
+        bool exists;
+        uint64 duration;            // reward distribution duration in seconds
+        uint64 periodFinish;        // timestamp when current rewards period ends
+        uint64 lastUpdateTime;      // last global update timestamp
+        uint192 rewardRate;         // rewards per second
+        uint256 rewardPerTokenStored; // scaled 1e18
+    }
+
+    uint256 public constant PRECISION = 1e18;
+    uint256 public constant MAX_REWARD_TOKENS = 8;
+
+    address[] public rewardTokens;
+    mapping(address => RewardData) public rewardData;
+
+    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid; // user => token => rptPaid
+    mapping(address => mapping(address => uint256)) public rewards;                // user => token => accrued
+
+    // -------------------------------------------------------------------------
+    // Constructor
+    // -------------------------------------------------------------------------
+
