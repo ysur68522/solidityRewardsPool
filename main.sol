@@ -94,3 +94,27 @@ contract MegaMultiRewardStaking {
         if (isPaused) revert Paused();
         _;
     }
+
+    modifier nonReentrant() {
+        if (_locked != 1) revert Reentrancy();
+        _locked = 2;
+        _;
+        _locked = 1;
+    }
+
+    // -------------------------------------------------------------------------
+    // Core staking state
+    // -------------------------------------------------------------------------
+
+    IERC20 public immutable stakingToken;
+
+    uint256 public totalStaked;
+    mapping(address => uint256) public stakedBalance;
+
+    // -------------------------------------------------------------------------
+    // Multi-reward accounting
+    // -------------------------------------------------------------------------
+
+    // Typical rewards distribution math (similar to Synthetix/StakingRewards):
+    // rewardPerTokenStored increases over time: (timeDelta * rewardRate * 1e18 / totalStaked)
+    // userRewardPerTokenPaid tracks the user's checkpoint for each reward token
