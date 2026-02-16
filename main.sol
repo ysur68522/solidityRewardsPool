@@ -382,3 +382,27 @@ contract MegaMultiRewardStaking {
 
         // Ensure contract holds enough tokens to cover distribution.
         // This check assumes token has no fee-on-transfer mechanics.
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        // total needed over duration:
+        uint256 required = newRewardRate * duration;
+        require(balance >= required, "insufficient reward balance");
+
+        rd.rewardRate = uint192(newRewardRate);
+        rd.lastUpdateTime = uint64(currentTime);
+        rd.periodFinish = uint64(currentTime + duration);
+
+        emit RewardsNotified(token, amount, uint64(duration), uint256(rd.rewardRate));
+    }
+
+    /**
+     * @notice Notify reward after pulling tokens from owner in the same tx.
+     *         Owner must approve this contract for `amount` of the reward token.
+     */
+    function notifyWithTransferFrom(address token, uint256 amount) external onlyOwner {
+        _safeTransferFrom(token, msg.sender, address(this), amount);
+        notifyRewardAmount(token, amount);
+    }
+
+    // -------------------------------------------------------------------------
+    // Owner: admin
+    // -------------------------------------------------------------------------
