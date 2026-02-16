@@ -430,3 +430,27 @@ contract MegaMultiRewardStaking {
         // Protect stakers: don't allow rescuing staking token while funds are staked.
         if (token == address(stakingToken)) {
             require(totalStaked == 0, "cannot rescue staking token while staked");
+        }
+
+        // If it's a reward token, ensure we don't pull out funds needed for the active schedule.
+        RewardData memory rd = rewardData[token];
+        if (rd.exists && block.timestamp < rd.periodFinish) {
+            // required remaining = (periodFinish - now) * rewardRate
+            uint256 remaining = rd.periodFinish - block.timestamp;
+            uint256 requiredRemaining = remaining * uint256(rd.rewardRate);
+            uint256 bal = IERC20(token).balanceOf(address(this));
+            require(bal >= requiredRemaining + amount, "would break rewards");
+        }
+
+        _safeTransfer(IERC20(token), to, amount);
+        emit Rescue(token, to, amount);
+    }
+
+    // -------------------------------------------------------------------------
+    // Safe transfer helpers (handles non-standard ERC20 returns)
+    // -------------------------------------------------------------------------
+
+    function _safeTransfer(IERC20 token, address to, uint256 amount) internal {
+        (bool ok, bytes memory data) =
+            address(token).call(abi.encodeWithSelector(token.transfer.selector, to, amount));
+        if (!ok) revert TransferFailed();
