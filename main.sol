@@ -70,3 +70,27 @@ contract MegaMultiRewardStaking {
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
     event RewardClaimed(address indexed user, address indexed rewardToken, uint256 amount);
+
+    event RewardTokenAdded(address indexed rewardToken, uint256 duration);
+    event RewardsNotified(address indexed rewardToken, uint256 amount, uint256 duration, uint256 rewardRate);
+
+    event Rescue(address indexed token, address indexed to, uint256 amount);
+
+    // -------------------------------------------------------------------------
+    // Owner / Pause / Reentrancy
+    // -------------------------------------------------------------------------
+
+    address public owner;
+    bool public isPaused;
+
+    uint256 private _locked = 1;
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert NotOwner();
+        _;
+    }
+
+    modifier whenNotPaused() {
+        if (isPaused) revert Paused();
+        _;
+    }
